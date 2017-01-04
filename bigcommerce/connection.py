@@ -14,7 +14,6 @@ except ImportError:
 
 import json  # only used for urlencode querystr
 import logging
-import streql
 import requests
 
 from bigcommerce.exception import *
@@ -205,14 +204,12 @@ class OAuthConnection(Connection):
         """
         Given a signed payload (usually passed as parameter in a GET request to the app's load URL) and a client secret,
         authenticates the payload and returns the user's data, or False on fail.
-
-        Uses constant-time str comparison to prevent vulnerability to timing attacks.
         """
         encoded_json, encoded_hmac = signed_payload.split('.')
         dc_json = base64.b64decode(encoded_json)
         signature = base64.b64decode(encoded_hmac)
         expected_sig = hmac.new(client_secret.encode(), base64.b64decode(encoded_json), hashlib.sha256).hexdigest()
-        authorised = streql.equals(signature, expected_sig)
+        authorised = (signature == expected_sig)
         return json.loads(dc_json.decode()) if authorised else False
 
     def fetch_token(self, client_secret, code, context, scope, redirect_uri,
